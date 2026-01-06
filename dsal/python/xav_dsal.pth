@@ -1,0 +1,1 @@
+import os, sys; exec("import xav_dsal_import_hook\nxav_dsal_import_hook.hook()")

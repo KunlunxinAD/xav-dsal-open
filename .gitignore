@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 
 # C extensions
-*.so
 
 # Distribution / packaging
 .Python
@@ -14,7 +13,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -205,3 +203,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# dsal specific ignores
+.vscode/*
+**/__pycache__/*
+**/output/*
+.DS_Store
+torch_ext/**/build/*
+torch_ext/**/*.egg-info/*
+dsal/python/tests/data/*
+dist_out/
+
+build/
+dist/
+output/
+dump_*/
+tmp/
+xav_dsal.egg-info
+
+__pycache__

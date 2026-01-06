@@ -1,0 +1,465 @@
+#pragma once
+
+#include <cstdint>
+#include <vector>
+#include <functional>
+#include "xav_dsal_defs.h"
+
+namespace xpytorch {
+namespace xpu {
+namespace api {
+struct Context;
+}
+}    // namespace xpu
+}    // namespace xpytorch
+
+namespace xav {
+
+namespace api = xpytorch::xpu::api;
+
+//
+// parameter , description        , shape
+// ---       , ---                , ---
+// x         , input              , b * c_in * h_in * w_in
+// weight    , convolution weight , c_out * c_kernel * kh * kw
+// offset    , deform_conv offset , b * deform_group * kh * kw * 2 * h_out * w_out
+// mask      , deform_conv mask   , b * deform_group * kh * kw * h_out * w_out
+// y         , output             , b * c_out * h_out * w_out
+//
+XAV_FUNC_TMPL_XPU(
+        deformable_conv,
+        TMPL_ARGS(typename TX, typename TW, typename TY, typename TGEMM),
+        F_ARGS(api::Context* ctx,
+               const TX* x,
+               const TW* weight,
+               const TX* offset,
+               const TX* mask,
+               TY* y,
+               int64_t n,
+               int64_t c,
+               int64_t h,
+               int64_t w,
+               int64_t f,
+               const std::vector<int64_t>& _ksize,
+               const std::vector<int64_t>& _stride,
+               const std::vector<int64_t>& _pad,
+               const std::vector<int64_t>& _dilation,
+               int64_t group,
+               int64_t deformable_group,
+               const float* x_maxptr,
+               const float* w_maxptr,
+               float* y_maxptr,
+               bool is_nchw));
+
+//
+// parameter , description        , shape
+// ---       , ---                , ---
+// input     , input feature      , b * c * h_in * w_in
+// weight    , convolution weight , c_out * c_kernel * h_in * w_in
+// bias      , convolusion bias   , 1 * c_out * 1 * 1
+// offset    , deform offset      , b * deformable_group * kh * kw * 2 * h_out * w_out
+// mask      , deform mask        , b * deformable_group * kh * kw * h_out * w_out
+// output    , output feature     , b * c_out * h_out * w_out
+//
+XAV_FUNC_TMPL_XPU(
+        deformable_conv_grad,
+        TMPL_ARGS(typename TX, typename TW, typename TY, typename TGEMM),
+        F_ARGS(api::Context* ctx,
+               const TX* x,
+               const TW* weight,
+               const TX* offset,
+               const TX* mask,
+               const TY* dy,
+               TX* dx,
+               TW* dw,
+               TX* doffset,
+               TX* dmask,
+               int64_t n,
+               int64_t c,
+               int64_t h,
+               int64_t w,
+               int64_t f,
+               const std::vector<int64_t>& _ksize,
+               const std::vector<int64_t>& _stride,
+               const std::vector<int64_t>& _pad,
+               const std::vector<int64_t>& _dilation,
+               int64_t group,
+               int64_t deformable_group,
+               const float* x_maxptr,
+               const float* w_maxptr,
+               float* dy_maxptr,
+               float* dx_maxptr,
+               float* dw_maxptr,
+               bool is_nchw));
+
+XAV_FUNC_XPU(
+        dcnv4_im2col,
+        F_ARGS(api::Context* ctx,
+               const float* value,
+               const float* p_offset,
+               float* output,
+               const int kernel_h,
+               const int kernel_w,
+               const int stride_h,
+               const int stride_w,
+               const int pad_h,
+               const int pad_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int group,
+               const int group_channels,
+               const int batch,
+               const int height_in,
+               const int width_in,
+               const int height_out,
+               const int width_out,
+               const int padded_offset_dim));
+
+XAV_FUNC_XPU(
+        dcnv4_col2im,
+        F_ARGS(api::Context* ctx,
+               const float* value,
+               const float* p_offset,
+               const float* grad_output,
+               float* grad_value,
+               float* grad_offset,
+               const int kernel_h,
+               const int kernel_w,
+               const int stride_h,
+               const int stride_w,
+               const int pad_h,
+               const int pad_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int group,
+               const int group_channels,
+               const int batch,
+               const int height_in,
+               const int width_in,
+               const int height_out,
+               const int width_out,
+               const int padded_offset_dim));
+
+XAV_FUNC_TMPL_CPU(
+        dcnv4_im2col,
+        TMPL_ARGS(typename scalar_t),
+        F_ARGS(api::Context* ctx,
+               const scalar_t* value,
+               const scalar_t* p_offset,
+               scalar_t* output,
+               const int kernel_h,
+               const int kernel_w,
+               const int stride_h,
+               const int stride_w,
+               const int pad_h,
+               const int pad_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int G,
+               const int D,
+               const int B,
+               const int height_in,
+               const int width_in,
+               const int height_out,
+               const int width_out,
+               const float offset_scale,
+               const int remove_center,
+               const int block_thread,
+               const int softmax,
+               const int padded_offset_dim));
+
+XAV_FUNC_TMPL_CPU(
+        dcnv4_col2im,
+        TMPL_ARGS(typename scalar_t),
+        F_ARGS(api::Context* ctx,
+               const scalar_t* value,
+               const scalar_t* p_offset,
+               const scalar_t* grad_output,
+               const int kernel_h,
+               const int kernel_w,
+               const int stride_h,
+               const int stride_w,
+               const int pad_h,
+               const int pad_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int G,
+               const int D,
+               const int B,
+               const int height_in,
+               const int width_in,
+               const int height_out,
+               const int width_out,
+               const float offset_scale,
+               const int remove_center,
+               float* grad_im,
+               float* grad_offset,
+               const int block_thread,
+               const bool softmax,
+               const int padded_offset_dim));
+
+XAV_FUNC_TMPL_XPU(
+        geometric_kernel_attn,
+        TMPL_ARGS(typename T),
+        F_ARGS(api::Context* ctx,
+               const T* data_value,
+               const int64_t* data_spatial_shapes,
+               const int64_t* data_level_start_index,
+               const int64_t* data_sampling_loc,
+               const T* data_attn_weight,
+               const int batch_size,
+               const int spatial_size,
+               const int num_heads,
+               const int channels,
+               const int num_levels,
+               const int num_query,
+               const int num_point,
+               T* data_col));
+
+XAV_FUNC_TMPL_XPU(
+        geometric_kernel_attn_grad,
+        TMPL_ARGS(typename T),
+        F_ARGS(api::Context* ctx,
+               const T* grad_col,
+               const T* data_value,
+               const int64_t* data_spatial_shapes,
+               const int64_t* data_level_start_index,
+               const int64_t* data_sampling_loc,
+               const T* data_attn_weight,
+               const int batch_size,
+               const int spatial_size,
+               const int num_heads,
+               const int channels,
+               const int num_levels,
+               const int num_query,
+               const int num_point,
+               T* grad_value,
+               T* grad_attn_weight));
+
+XAV_FUNC_XPU_AND_CPU(
+        ms_deformable_im2col,
+        F_ARGS(api::Context* ctx,
+               const float* data_value,
+               const float* data_sampling_loc,
+               const float* data_attn_weight,
+               float* data_col,
+               int64_t* data_spatial_shapes,
+               int64_t spatial_shapes_length,
+               int64_t* data_level_start_index,
+               int64_t level_start_index_length,
+               const int batch_size,
+               const int spatial_size,
+               const int num_heads,
+               const int channels,
+               const int num_levels,
+               const int num_query,
+               const int num_point));
+
+XAV_FUNC_XPU_AND_CPU(
+        ms_deformable_col2im,
+        F_ARGS(api::Context* ctx,
+               const float* grad_out,
+               const float* value,
+               const float* sampling_locations,
+               const float* attn_weights,
+               float* grad_value,
+               float* grad_sampling_locations,
+               float* grad_attn_weights,
+               int64_t* data_spatial_shapes,
+               int64_t spatial_shapes_length,
+               int64_t* data_level_start_index,
+               int64_t level_start_index_length,
+               int batch_size,
+               int spatial_size,
+               int num_heads,
+               int channels,
+               int num_levels,
+               int num_querys,
+               int num_points));
+
+XAV_FUNC_XPU_AND_CPU(
+        deformable_aggregation,
+        F_ARGS(api::Context* ctx,
+               const float* mc_ms_feat,
+               const int* spatial_shape,
+               const int* scale_start_index,
+               const float* sampling_location,
+               const float* weights,
+               float* output,
+               const int batch_size,
+               const int num_feat,
+               const int num_embeds,
+               const int num_cams,
+               const int num_scale,
+               const int num_anchors,
+               const int num_pts,
+               const int num_groups));
+
+XAV_FUNC_XPU_AND_CPU(
+        deformable_aggregation_grad,
+        F_ARGS(api::Context* ctx,
+               const float* mc_ms_feat,
+               const int* spatial_shape,
+               const int* scale_start_index,
+               const float* sampling_location,
+               const float* weights,
+               const float* grad_output,
+               float* grad_mc_ms_feat,
+               float* grad_sampling_location,
+               float* grad_weights,
+               const int batch_size,
+               const int num_feat,
+               const int num_embeds,
+               const int num_cams,
+               const int num_scale,
+               const int num_anchors,
+               const int num_pts,
+               const int num_groups));
+
+XAV_FUNC_TMPL_CPU(
+        modulated_deformable_im2col_kernel,
+        TMPL_ARGS(typename T),
+        F_ARGS(api::Context* ctx,
+               const int n,
+               const T* data_im,
+               const T* data_offset,
+               const T* data_mask,
+               const int height,
+               const int width,
+               const int kernel_h,
+               const int kernel_w,
+               const int pad_h,
+               const int pad_w,
+               const int stride_h,
+               const int stride_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int channel_per_deformable_group,
+               const int batch_size,
+               const int num_channels,
+               const int deformable_group,
+               const int height_col,
+               const int width_col,
+               T* data_col));
+
+XAV_FUNC_TMPL_CPU(
+        modulated_deformable_col2im_kernel,
+        TMPL_ARGS(typename T),
+        F_ARGS(api::Context* ctx,
+               const int n,
+               const T* data_col,
+               const T* data_offset,
+               const T* data_mask,
+               const int channels,
+               const int height,
+               const int width,
+               const int kernel_h,
+               const int kernel_w,
+               const int pad_h,
+               const int pad_w,
+               const int stride_h,
+               const int stride_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int channel_per_deformable_group,
+               const int batch_size,
+               const int deformable_group,
+               const int height_col,
+               const int width_col,
+               T* grad_im));
+
+XAV_FUNC_TMPL_CPU(
+        modulated_deformable_col2im_coord_kernel,
+        TMPL_ARGS(typename T),
+        F_ARGS(api::Context* ctx,
+               const int n,
+               const T* data_col,
+               const T* data_im,
+               const T* data_offset,
+               const T* data_mask,
+               const int channels,
+               const int height,
+               const int width,
+               const int kernel_h,
+               const int kernel_w,
+               const int pad_h,
+               const int pad_w,
+               const int stride_h,
+               const int stride_w,
+               const int dilation_h,
+               const int dilation_w,
+               const int channel_per_deformable_group,
+               const int batch_size,
+               const int offset_channels,
+               const int deformable_group,
+               const int height_col,
+               const int width_col,
+               T* grad_offset,
+               T* grad_mask));
+
+XAV_FUNC_XPU_AND_CPU(
+        local_aggregate_preprocess,
+        F_ARGS(api::Context* ctx,
+               const int* means3D_int,
+               const int* radii,
+               int* tiles_touched,
+               int* point_offsets,
+               int P,
+               int H,
+               int W,
+               int D,
+               int& num_rendered));
+XAV_FUNC_XPU_AND_CPU(
+        local_aggregate_dup_keys,
+        F_ARGS(api::Context* ctx,
+               const int* means3D_int,
+               const int* radii,
+               const int* point_offsets,
+               int* gaussian_keys_unsorted,
+               int* gaussian_values_unsorted,
+               int P,
+               int H,
+               int W,
+               int D));
+XAV_FUNC_XPU_AND_CPU(
+        local_aggregate_process,
+        F_ARGS(api::Context* ctx,
+               const float* pts,
+               const int* points_int,
+               const int* point_list_keys,
+               const int* point_list,
+               const float* means3D,
+               const float* opacities,
+               const float* semantics,
+               const float* cov3D,
+               int* ranges,
+               float* out,
+               int N,
+               int H,
+               int W,
+               int D,
+               int num_rendered));
+XAV_FUNC_XPU_AND_CPU(
+        local_aggregate_backward,
+        F_ARGS(api::Context* ctx,
+               const int* point_offsets,
+               const int* point_list_keys_unsorted,
+               const int* points_int,
+               const float* pts,
+               const float* means3D,
+               const float* cov3D,
+               const float* opacities,
+               const float* semantics,
+               const float* out_grad,
+               int* voxel2pts,
+               float* means3D_grad,
+               float* opacity_grad,
+               float* semantics_grad,
+               float* cov3D_grad,
+               int P,
+               int R,
+               int N,
+               int H,
+               int W,
+               int D));
+}    // namespace xav
