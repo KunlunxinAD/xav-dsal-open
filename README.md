@@ -11,17 +11,23 @@ DrivingSDK算子支持的CPU架构，Python，PyTorch和torch_npu版本对应关
 | master    | x86|Python3.10.x|2.5.0|
 
 ## 环境部署
-提供`iregistry.baidu-int.com/kunlunxin-self-driving/xav:v1.4.0`镜像进行安装
+### 发布包安装
+whl包在`wheels`文件夹内。
+```
+pip install xav-dsal-open/dsal/wheels/xav_dsal-1.4.0-cp310-cp310-linux_x86_64.whl
+```
 ### 源码安装
+提供`iregistry.baidu-int.com/kunlunxin-self-driving/xav:v1.4.0`镜像进行安装
 1. 克隆原始仓库
 ```
 git clone https://github.com/KunlunxinAD/xav-dsal-open.git
 ```
-2.编译whl包
+2. 编译whl包
 ```
 cd dsal && make dist
 ```
 生成的whl包在`dsal/output`中。
+可能会遇到bos权限问题
 
 ## 算子清单
 请详见[算子清单](./dsal/python/xav_dsal/docs/README.md)
